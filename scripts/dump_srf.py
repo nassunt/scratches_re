@@ -8,7 +8,6 @@ def output_file(file_name, file_data):
     with open(file_name, "wb") as output_file:
         output_file.write(file_data)
 
-
 #res_file_path = "C:/Program Files (x86)/Got Game/Scratches Director's Cut/scream.res"
 res_file_path = "C:/Program Files (x86)/Got Game/Scratches Director's Cut/scratches.res"
 header = b''
