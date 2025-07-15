@@ -93,6 +93,20 @@ with open("frida_gl_dump.txt", "w") as f:
         }
     });
                                    
+    // Print all calls to glTexImage2D
+    Interceptor.attach(Module.getGlobalExportByName("glTexImage2D"), {
+        onEnter(args) {
+            send("glTexImage2D called with target: " + args[0].toInt32() + ", level: " + args[1].toInt32() + ", internalformat: " + args[2].toInt32() + ", width: " + args[3].toInt32() + ", height: " + args[4].toInt32() + ", border: " + args[5].toInt32() + ", format: " + args[6].toInt32() + ", type: " + args[7].toInt32() + ", data: " + args[8].toInt32());
+        }
+    });
+                                   
+    // Print all calls to glTexSubImage2D
+    Interceptor.attach(Module.getGlobalExportByName("glTexSubImage2D"), {
+        onEnter(args) {
+            send("glTexSubImage2D called with target: " + args[0].toInt32() + ", level: " + args[1].toInt32() + ", xoffset: " + args[2].toInt32() + ", yoffest: " + args[3].toInt32() + ", width: " + args[4].toInt32() + ", height: " + args[5].toInt32() + ", format: " + args[6].toInt32() + ", type: " + args[7].toInt32() + ", pixels: " + args[8].toInt32());
+        }
+    });
+                                   
     // Print all calls to glEnd
     Interceptor.attach(Module.getGlobalExportByName("glEnd"), {
         onEnter(args) {
