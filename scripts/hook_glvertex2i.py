@@ -29,20 +29,39 @@ with open("frida_hook_dump.txt", "w") as f:
             var x = args[0].toInt32();
             var y = args[1].toInt32();
                                    
+            var black_bar_height_top = 64;
+            var black_bar_height_bottom = 31;
+                                   
+            var additional_width = 537;
+                                   
             if(x == 0 && y == 704){
-                args[1] = ptr(1080);
+                // args[1] = ptr(1080 - black_bar_height_top);
+                args[1] = ptr(1440);
             }
             else if(x == 1312 && y == 704){
-                args[0] = ptr(1920);
-                args[1] = ptr(1080);
+                // args[0] = ptr(1920 + additional_width);
+                // args[1] = ptr(1080 - black_bar_height_top);
+                args[0] = ptr(2560);
+                args[1] = ptr(1440);
             }
             else if(x == 1312 && y == -685){
+                // args[0] = ptr(1920 + additional_width);
+                // args[1] = ptr(-1080 + black_bar_height_bottom);
+                args[0] = ptr(2560);
+                args[1] = ptr(-1440);
+            }
+            else if(x == 0 && y == -685){
+                // args[1] = ptr(-1080 + black_bar_height_bottom);
+                args[1] = ptr(-1440);
+            }
+            else if(x == 0 && y == -662){
+                args[1] = ptr(-1080);
+            }
+            else if(x == 1312 && y == -662){
                 args[0] = ptr(1920);
                 args[1] = ptr(-1080);
             }
-            else if(x == 0 && y == -685){
-                args[1] = ptr(-1080);
-            }
+            
 
             send("glVertex2i called with x: " + args[0].toInt32() + ", y: " + args[1].toInt32());
         }
