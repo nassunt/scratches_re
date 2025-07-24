@@ -41,6 +41,28 @@ with open("frida_hook_dump.txt", "w") as f:
         })
     }                           
     listen();
+
+    /*                     
+    Interceptor.attach(Module.getGlobalExportByName("glTexCoord2f"), {
+        onEnter(args) {
+            var s = args[0].toInt32();
+            var t = args[1].toInt32();
+            
+            if (s == 0 && t == 1031798784){ // 0 and 0.6
+                args[1] = ptr(0);
+            }
+            else if(s == 1065353216 && t == 1031798784){
+                args[1] = ptr(0);
+            }
+            else if(s == 1065353216 && t == 1064304640){
+                args[1] = ptr(1065353216);
+            }
+            else if(s == 0 && t == 1064304640){
+                args[1] = ptr(1065353216);
+            }
+        }
+    });
+    */
                                    
     // Print all calls to glVertex2i
     Interceptor.attach(Module.getGlobalExportByName("glVertex2i"), {
@@ -94,10 +116,10 @@ with open("frida_hook_dump.txt", "w") as f:
                 args[1] = ptr(new_height_bottom);
             }
             else if(x == 1024 && y == 64){   // (1, 0.6) This one is done in a different order for some reason (first call is (0, 0.6) but doesn't need to be changed)
-                args[0] = ptr(new_width - 750); 
+                args[0] = ptr(new_width - 537); 
             }
             else if(x == 1024 && y == 960){  // (1, 0.975)
-                args[0] = ptr(new_width - 750); 
+                args[0] = ptr(new_width - 537); 
                 args[1] = ptr(new_height_top);
             }
             else if(x == 0 && y == 960){    // (0, 0.975)
