@@ -54,29 +54,56 @@ with open("frida_hook_dump.txt", "w") as f:
                                    
             var width_modification = 102;
                                    
-            if(x == 0 && y == 704){             // (0,0)
-                args[1] = ptr(globalThis.screenSettings.screen_height - black_bar_height_top);
+            var new_width =  globalThis.screenSettings.screen_width - width_modification;
+            var new_height_top = globalThis.screenSettings.screen_height - black_bar_height_top;
+            var new_height_bottom = -globalThis.screenSettings.screen_height + black_bar_height_bottom;
+                                   
+            if(x == 0 && y == 704){          // (0,0)  Fix for most textures and videos 
+                args[1] = ptr(new_height_top);
             }
-            else if(x == 1312 && y == 704){     // (1,0)
-                args[0] = ptr(globalThis.screenSettings.screen_width - width_modification);
-                args[1] = ptr(globalThis.screenSettings.screen_height - black_bar_height_top);
+            else if(x == 1312 && y == 704){  // (1,0)
+                args[0] = ptr(new_width);
+                args[1] = ptr(new_height_top);
             }
-            else if(x == 1312 && y == -685){    // (1,1)
-                args[0] = ptr(globalThis.screenSettings.screen_width - width_modification);
-                args[1] = ptr(-globalThis.screenSettings.screen_height + black_bar_height_bottom);
+            else if(x == 1312 && y == -685){ // (1,1)
+                args[0] = ptr(new_width);
+                args[1] = ptr(new_height_bottom);
             }
-            else if(x == 0 && y == -685){       // (0,1)
-                args[1] = ptr(-globalThis.screenSettings.screen_height + black_bar_height_bottom);
+            else if(x == 0 && y == -685){    // (0,1)
+                args[1] = ptr(new_height_bottom);
             }
-            else if(x == 0 && y == -662){
-                args[1] = ptr(-1080);
+            else if(x == 0 && y == -662){    // (0,1) Fix for clipped corner in videos
+                args[1] = ptr(new_height_bottom);
             }
-            else if(x == 1312 && y == -662){
-                args[0] = ptr(1920);
-                args[1] = ptr(-1080);
+            else if(x == 1312 && y == -662){ // (1,1)
+                args[0] = ptr(new_width);
+                args[1] = ptr(new_height_bottom);
             }
-            
-
+            else if(x == 0 && y == 1016){    // (0,0) Fix for black background 
+                args[1] = ptr(new_height_top);
+            }
+            else if(x == 1024 && y == 704){  // (1,0)
+                args[0] = ptr(new_width);
+                args[1] = ptr(new_height_top);
+            }
+            else if(x == 1024 && y == -320){ // (1,1)
+                args[0] = ptr(new_width);
+                args[1] = ptr(new_height_bottom);
+            }
+            else if(x == 0 && y == -320){    // (0,1)
+                args[1] = ptr(new_height_bottom);
+            }
+            else if(x == 1024 && y == 64){   // (1, 0.6) This one is done in a different order for some reason (first call is (0, 0.6) but doesn't need to be changed)
+                args[0] = ptr(new_width - 750); 
+            }
+            else if(x == 1024 && y == 960){  // (1, 0.975)
+                args[0] = ptr(new_width - 750); 
+                args[1] = ptr(new_height_top);
+            }
+            else if(x == 0 && y == 960){    // (0, 0.975)
+                args[1] = ptr(new_height_top);
+            }
+                                
             send("glVertex2i called with x: " + args[0].toInt32() + ", y: " + args[1].toInt32());
         }
     });
