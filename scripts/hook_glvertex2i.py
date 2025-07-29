@@ -43,33 +43,48 @@ with open("frida_hook_dump.txt", "w") as f:
 
     const VK_ESCAPE = 0x1B;
     const WM_KEYDOWN = 0x100;
+    const WM_LBUTTONDOWN = 0x201;
 
     // Log esc keystrokes to find additional textures that are being drawn incorrectly
-    Interceptor.attach(Module.getGlobalExportByName("PeekMessageA"), {
-        onEnter(args) {
+    // Also get cursor location for mouse clicks
+    Interceptor.attach(Module.getGlobalExportByName("PeekMessageA"),{
+        onEnter(args){
             this.msgPtr = args[0];
         },
-        onLeave(retval) {
-            try {
+        onLeave(retval){
+            try{
                 if (retval.toInt32() === 0) return;
                 if (!this.msgPtr || this.msgPtr.isNull()) return;
 
                 // Read memory addresses for the message and wParam values
                 const message = this.msgPtr.add(4).readU32();
                 const wParam  = this.msgPtr.add(8).readU32();
+                const lParam = this.msgPtr.add(12).readU32();
 
-                if (message === WM_KEYDOWN && wParam === VK_ESCAPE) {
+                // Case if esc key is pressed
+                if (message === WM_KEYDOWN && wParam === VK_ESCAPE){
                     send("Esc pressed!");
                 }
-            } catch (e) {
+                // Case for mouse click
+                if (message === WM_LBUTTONDOWN){
+                    
+                    const x = lParam & 0xffff;
+                    const y = (lParam >> 16) & 0xffff;
+                    
+                    // TODO convert to unsigned int
+
+                    send("Mouse click at x: " + x + ", y: " + y);
+                }
+            
+            }catch (e){
                 console.log("Read error in PeekMessage hook:", e);
             }
         }
     });
 
     /*                     
-    Interceptor.attach(Module.getGlobalExportByName("glTexCoord2f"), {
-        onEnter(args) {
+    Interceptor.attach(Module.getGlobalExportByName("glTexCoord2f"),{
+        onEnter(args){
             var s = args[0].toInt32();
             var t = args[1].toInt32();
             
@@ -90,8 +105,8 @@ with open("frida_hook_dump.txt", "w") as f:
     */
 
     // Print all calls to glVertex2i
-    Interceptor.attach(Module.getGlobalExportByName("glVertex2i"), {
-        onEnter(args) {
+    Interceptor.attach(Module.getGlobalExportByName("glVertex2i"),{
+        onEnter(args){
                                    
             var x = args[0].toInt32();
             var y = args[1].toInt32();
@@ -105,6 +120,7 @@ with open("frida_hook_dump.txt", "w") as f:
             var new_height_top = globalThis.screenSettings.screen_height - black_bar_height_top;
             var new_height_bottom = -globalThis.screenSettings.screen_height + black_bar_height_bottom;
                                    
+                              
             if(x == 0 && y == 704){          // (0,0)  Fix for most textures and videos 
                 args[1] = ptr(new_height_top);
             }
@@ -141,10 +157,10 @@ with open("frida_hook_dump.txt", "w") as f:
                 args[1] = ptr(new_height_bottom);
             }
             else if(x == 1024 && y == 64){   // (1, 0.6) Fix transition (first call is (0, 0.6) but doesn't need to be changed) (this one has different glTexCoord values basically meaning it is zoomed in)
-                args[0] = ptr(new_width - 537); 
+                args[0] = ptr(new_width - 537);
             }
             else if(x == 1024 && y == 960){  // (1, 0.975)
-                args[0] = ptr(new_width - 537); 
+                args[0] = ptr(new_width - 537);
                 args[1] = ptr(new_height_top);
             }
             else if(x == 0 && y == 960){    // (0, 0.975)
@@ -155,7 +171,7 @@ with open("frida_hook_dump.txt", "w") as f:
             send("glVertex2i called with x: " + args[0].toInt32() + ", y: " + args[1].toInt32());
         }
     });
-                                    
+                                               
     """)
 
     script.on('message', on_message)

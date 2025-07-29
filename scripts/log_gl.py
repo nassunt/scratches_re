@@ -23,6 +23,32 @@ with open("frida_gl_dump.txt", "w") as f:
     # Frida script
     script = session.create_script("""
 
+    const VK_ESCAPE = 0x1B;
+    const WM_KEYDOWN = 0x100;
+
+    // Log esc keystrokes to find additional textures that are being drawn incorrectly
+    Interceptor.attach(Module.getGlobalExportByName("PeekMessageA"), {
+        onEnter(args) {
+            this.msgPtr = args[0];
+        },
+        onLeave(retval) {
+            try {
+                if (retval.toInt32() === 0) return;
+                if (!this.msgPtr || this.msgPtr.isNull()) return;
+
+                // Read memory addresses for the message and wParam values
+                const message = this.msgPtr.add(4).readU32();
+                const wParam  = this.msgPtr.add(8).readU32();
+
+                if (message === WM_KEYDOWN && wParam === VK_ESCAPE) {
+                    send("Esc pressed!");
+                }
+            } catch (e) {
+                console.log("Read error in PeekMessage hook:", e);
+            }
+        }
+    });
+
     // Print all calls to glBegin
     Interceptor.attach(Module.getGlobalExportByName("glBegin"), {
         onEnter(args) {
