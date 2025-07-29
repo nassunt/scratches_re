@@ -30,7 +30,6 @@ with open("frida_hook_dump.txt", "w") as f:
 
     # Frida script
     script = session.create_script("""
-
     // Get variables from python
     function listen(){
         recv(function(message){
@@ -41,6 +40,32 @@ with open("frida_hook_dump.txt", "w") as f:
         })
     }                           
     listen();
+
+    const VK_ESCAPE = 0x1B;
+    const WM_KEYDOWN = 0x100;
+
+    // Log esc keystrokes to find additional textures that are being drawn incorrectly
+    Interceptor.attach(Module.getGlobalExportByName("PeekMessageA"), {
+        onEnter(args) {
+            this.msgPtr = args[0];
+        },
+        onLeave(retval) {
+            try {
+                if (retval.toInt32() === 0) return;
+                if (!this.msgPtr || this.msgPtr.isNull()) return;
+
+                // Read memory addresses for the message and wParam values
+                const message = this.msgPtr.add(4).readU32();
+                const wParam  = this.msgPtr.add(8).readU32();
+
+                if (message === WM_KEYDOWN && wParam === VK_ESCAPE) {
+                    send("Esc pressed!");
+                }
+            } catch (e) {
+                console.log("Read error in PeekMessage hook:", e);
+            }
+        }
+    });
 
     /*                     
     Interceptor.attach(Module.getGlobalExportByName("glTexCoord2f"), {
@@ -63,7 +88,7 @@ with open("frida_hook_dump.txt", "w") as f:
         }
     });
     */
-                                   
+
     // Print all calls to glVertex2i
     Interceptor.attach(Module.getGlobalExportByName("glVertex2i"), {
         onEnter(args) {
@@ -115,7 +140,7 @@ with open("frida_hook_dump.txt", "w") as f:
             else if(x == 0 && y == -320){    // (0,1)
                 args[1] = ptr(new_height_bottom);
             }
-            else if(x == 1024 && y == 64){   // (1, 0.6) This one is done in a different order for some reason (first call is (0, 0.6) but doesn't need to be changed)
+            else if(x == 1024 && y == 64){   // (1, 0.6) Fix transition (first call is (0, 0.6) but doesn't need to be changed) (this one has different glTexCoord values basically meaning it is zoomed in)
                 args[0] = ptr(new_width - 537); 
             }
             else if(x == 1024 && y == 960){  // (1, 0.975)
@@ -125,11 +150,12 @@ with open("frida_hook_dump.txt", "w") as f:
             else if(x == 0 && y == 960){    // (0, 0.975)
                 args[1] = ptr(new_height_top);
             }
+
                                 
             send("glVertex2i called with x: " + args[0].toInt32() + ", y: " + args[1].toInt32());
         }
     });
-                                
+                                    
     """)
 
     script.on('message', on_message)
