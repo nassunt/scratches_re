@@ -1,0 +1,1 @@
+This repository contains the scripts I used when reverse engineering Scratches. The scripts dump the proprietary resource file data, use Frida to log OpenGL function calls and hook glVertex2i calls. The hook_glvertex2i.py script functions as a minimal fix to a widescreen resolution issue.
